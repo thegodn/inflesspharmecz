@@ -1,0 +1,19 @@
+{
+    "eczaneler": [
+        {
+            "ad": "Eczane1",
+            "sehir": "Adana",
+            "ilce": "Aladağ"
+        },
+        {
+            "ad": "Eczane2",
+            "sehir": "Adana",
+            "ilce": "Çukurova"
+        },
+        {
+            "ad": "Eczane3",
+            "sehir": "Adana",
+            "ilce": "Çukurova"
+        }
+    ]
+}
