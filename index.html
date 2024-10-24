@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eczanelerimiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Önceki stiller aynen kalacak */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .container {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .search-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .search-container select, .search-container input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .search-container select {
+            width: 30%;
+        }
+        .search-container input {
+            width: 35%;
+        }
+        .eczane-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .eczane-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+        }
+        .eczane-item img {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 10px;
+        }
+        .eczane-item h3 {
+            margin: 0;
+            color: #333;
+        }
+        .eczane-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        #loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #666;
+        }
+        #error {
+            text-align: center;
+            padding: 20px;
+            color: #ff0000;
+            display: none;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;" onselectstart="return false;" unselectable="on">
+    <div class="container">
+        <h1>Eczanelerimiz</h1>
+        <div class="search-container">
+            <select id="sehir-select">
+                <option value="">Şehir seçerek ara...</option>
+                <option value="adana">Adana</option>
+            </select>
+            <select id="ilce-select">
+                <option value="">İlçe seçerek ara...</option>
+            </select>
+            <input type="text" id="kelime-ara" placeholder="Kelime ile ara...">
+        </div>
+        <div id="loading">Eczaneler yükleniyor...</div>
+        <div id="error">Eczane listesi yüklenirken bir hata oluştu.</div>
+        <div class="eczane-list" id="eczane-listesi">
+            <!-- Eczaneler burada dinamik olarak oluşturulacak -->
+        </div>
+    </div>
+
+    <script>
+        let eczaneler = []; // Global değişken olarak eczane listesini tutacağız
+
+        // Sayfa yüklendiğinde eczaneleri JSON dosyasından çek
+        async function eczaneleriYukle() {
+            try {
+                const response = await fetch('eczaneler.json');
+                if (!response.ok) {
+                    throw new Error('Veriler yüklenemedi');
+                }
+                const data = await response.json();
+                eczaneler = data.eczaneler;
+                document.getElementById('loading').style.display = 'none';
+                eczaneleriGoster(eczaneler);
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                console.error('Veri yükleme hatası:', error);
+            }
+        }
+
+        function eczaneleriGoster(eczaneListesi) {
+            const eczaneContainer = document.getElementById('eczane-listesi');
+            eczaneContainer.innerHTML = '';
+            eczaneListesi.forEach(eczane => {
+                const eczaneDiv = document.createElement('div');
+                eczaneDiv.className = 'eczane-item';
+                eczaneDiv.innerHTML = `
+                    <img src="https://i.hizliresim.com/rxf95n9.png" alt="Eczane ikonu">
+                    <h3>${eczane.ad}</h3>
+                    <p>${eczane.sehir} / ${eczane.ilce}</p>
+                `;
+                eczaneContainer.appendChild(eczaneDiv);
+            });
+        }
+
+        function eczaneleriFiltrele() {
+            const sehir = document.getElementById('sehir-select').value.toLowerCase();
+            const ilce = document.getElementById('ilce-select').value.toLowerCase();
+            const kelime = document.getElementById('kelime-ara').value.toLowerCase();
+
+            const filtrelenmisEczaneler = eczaneler.filter(eczane => 
+                (sehir === '' || eczane.sehir.toLowerCase() === sehir) &&
+                (ilce === '' || eczane.ilce.toLowerCase() === ilce) &&
+                (kelime === '' || eczane.ad.toLowerCase().includes(kelime))
+            );
+
+            eczaneleriGoster(filtrelenmisEczaneler);
+        }
+
+        function ilceleriDoldur() {
+            const sehir = document.getElementById('sehir-select').value;
+            const ilceSelect = document.getElementById('ilce-select');
+            ilceSelect.innerHTML = '<option value="">İlçe seçerek ara...</option>';
+
+            if (sehir === 'adana') {
+                const ilceler = ['Aladağ', 'Çukurova', 'Kozan', 'Sarıçam'];
+                ilceler.forEach(ilce => {
+                    const option = document.createElement('option');
+                    option.value = ilce.toLowerCase();
+                    option.textContent = ilce;
+                    ilceSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Event Listener'ları ekle
+        document.getElementById('sehir-select').addEventListener('change', () => {
+            ilceleriDoldur();
+            eczaneleriFiltrele();
+        });
+        document.getElementById('ilce-select').addEventListener('change', eczaneleriFiltrele);
+        document.getElementById('kelime-ara').addEventListener('input', eczaneleriFiltrele);
+
+        // Sayfa yüklendiğinde eczaneleri yükle
+        window.addEventListener('load', eczaneleriYukle);
+    </script>
+</body>
+</html>
